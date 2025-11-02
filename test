@@ -1,0 +1,56 @@
+// Weak Hash Detection Passive Script for OWASP ZAP
+// Type: Passive (Engine: ECMAScript / Graal.js)
+// This script detects weak hash algorithm names or hash-like strings in HTTP response headers and body.
+
+function scan(ps, msg, src) {
+    try {
+        var uri = msg.getRequestHeader().getURI().toString();
+        var respHeader = msg.getResponseHeader().toString();
+        var respBody = msg.getResponseBody().toString();
+
+        // Regex patterns for weak hashes
+        var patterns = [
+            /\bmd5\b/i,
+            /\bsha[-_ ]?1\b/i,
+            /\bmd2\b/i,
+            /\bmd4\b/i,
+            /\bRIPEMD[-_ ]?160\b/i,
+            /\b[a-f0-9]{32}\b/i,   // MD5-like
+            /\b[a-f0-9]{40}\b/i    // SHA1-like
+        ];
+
+        var findings = [];
+
+        for (var i = 0; i < patterns.length; i++) {
+            var patt = patterns[i];
+            var headerMatch = patt.exec(respHeader);
+            var bodyMatch = patt.exec(respBody);
+
+            if (headerMatch) findings.push("Header: " + headerMatch[0]);
+            if (bodyMatch) findings.push("Body: " + bodyMatch[0]);
+        }
+
+        if (findings.length > 0) {
+            var evidence = findings.join(", ");
+
+            ps.raiseAlert(
+                2, // Risk: Medium
+                2, // Confidence: Medium
+                "Use of Weak Hash Algorithm Detected",
+                "This response appears to include weak hash algorithms (e.g., MD5, SHA-1). " +
+                "These algorithms are considered insecure for password or integrity purposes.",
+                uri,
+                "", "", // param, attack
+                "Detected weak hash pattern(s) in response content.",
+                "Use SHA-256 or stronger algorithms (SHA-512, bcrypt, Argon2).",
+                evidence,
+                327, // CWE-327: Use of a Broken or Risky Cryptographic Algorithm
+                13,  // WASC-13: Information Leakage
+                msg
+            );
+        }
+
+    } catch (e) {
+        print("WeakHash Passive Script Error: " + e);
+    }
+}
