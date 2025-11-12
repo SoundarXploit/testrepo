@@ -1,7 +1,20 @@
-// Standalone script
-function zapFilterAlerts(alert) {
-    if (alert.getName().equalsIgnoreCase("Information Disclosure - Sensitive Information in URL")) {
-        alert.setRisk(3);        // High
-        alert.setConfidence(3);  // Confirmed
+// Standalone script for ZAP
+// This modifies risk for all alerts matching the given name
+
+function processAlerts() {
+    var alerts = org.parosproxy.paros.control.Control.getSingleton()
+        .getExtensionLoader()
+        .getExtension("ExtensionAlert")
+        .getAllAlerts();
+
+    for (var i = 0; i < alerts.size(); i++) {
+        var a = alerts.get(i);
+        if (a.getName().equalsIgnoreCase("Information Disclosure - Sensitive Information in URL")) {
+            a.setRisk(3);        // High
+            a.setConfidence(3);  // Confirmed
+        }
     }
+    print("Risk level changed for Information Disclosure alerts.");
 }
+
+processAlerts();
