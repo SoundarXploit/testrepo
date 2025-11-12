@@ -1,0 +1,7 @@
+// Standalone script
+function zapFilterAlerts(alert) {
+    if (alert.getName().equalsIgnoreCase("Information Disclosure - Sensitive Information in URL")) {
+        alert.setRisk(3);        // High
+        alert.setConfidence(3);  // Confirmed
+    }
+}
